@@ -35,7 +35,7 @@ wsServer.on('request', function(request) {
     }
 
     var connection = request.accept('echo-protocol', request.origin);
-    console.log((new Date()) + ' Connection accepted.');
+    //console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
         if (message.type === 'utf8') {
             //console.log('Received Message: ' + message.utf8Data);
@@ -48,5 +48,9 @@ wsServer.on('request', function(request) {
     });
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+    });
+
+    connection.on('error', function(error) {
+        console.log("Connection Error: " + error.toString());
     });
 });
