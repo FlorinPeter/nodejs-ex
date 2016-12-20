@@ -26,6 +26,10 @@ function originIsAllowed(origin) {
   return true;
 }
 
+server.on('error', function(error) {
+    console.log("Server Error: " + error.toString());
+});
+
 wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
