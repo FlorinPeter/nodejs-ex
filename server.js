@@ -1,107 +1,52 @@
-//  OpenShift sample Node application
-var express = require('express'),
-    fs      = require('fs'),
-    app     = express(),
-    eps     = require('ejs'),
-    morgan  = require('morgan');
-    
-Object.assign=require('object-assign')
+#!/usr/bin/env node
+var WebSocketServer = require('websocket').server;
+var http = require('http');
 
-app.engine('html', require('ejs').renderFile);
-app.use(morgan('combined'))
+var server = http.createServer(function(request, response) {
+    console.log((new Date()) + ' Received request for ' + request.url);
+    response.writeHead(404);
+    response.end();
+});
+server.listen(8080, function() {
+    console.log((new Date()) + ' Server is listening on port 8080');
+});
 
-var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
-    mongoURLLabel = "";
+wsServer = new WebSocketServer({
+    httpServer: server,
+    // You should not use autoAcceptConnections for production
+    // applications, as it defeats all standard cross-origin protection
+    // facilities built into the protocol and the browser.  You should
+    // *always* verify the connection's origin and decide whether or not
+    // to accept it.
+    autoAcceptConnections: false
+});
 
-if (mongoURL == null && process.env.DATABASE_SERVICE_NAME) {
-  var mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase(),
-      mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'],
-      mongoPort = process.env[mongoServiceName + '_SERVICE_PORT'],
-      mongoDatabase = process.env[mongoServiceName + '_DATABASE'],
-      mongoPassword = process.env[mongoServiceName + '_PASSWORD']
-      mongoUser = process.env[mongoServiceName + '_USER'];
-
-  if (mongoHost && mongoPort && mongoDatabase) {
-    mongoURLLabel = mongoURL = 'mongodb://';
-    if (mongoUser && mongoPassword) {
-      mongoURL += mongoUser + ':' + mongoPassword + '@';
-    }
-    // Provide UI label that excludes user id and pw
-    mongoURLLabel += mongoHost + ':' + mongoPort + '/' + mongoDatabase;
-    mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
-
-  }
+function originIsAllowed(origin) {
+  // put logic here to detect whether the specified origin is allowed.
+  return true;
 }
-var db = null,
-    dbDetails = new Object();
 
-var initDb = function(callback) {
-  if (mongoURL == null) return;
-
-  var mongodb = require('mongodb');
-  if (mongodb == null) return;
-
-  mongodb.connect(mongoURL, function(err, conn) {
-    if (err) {
-      callback(err);
+wsServer.on('request', function(request) {
+    if (!originIsAllowed(request.origin)) {
+      // Make sure we only accept requests from an allowed origin
+      request.reject();
+      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
       return;
     }
 
-    db = conn;
-    dbDetails.databaseName = db.databaseName;
-    dbDetails.url = mongoURLLabel;
-    dbDetails.type = 'MongoDB';
-
-    console.log('Connected to MongoDB at: %s', mongoURL);
-  });
-};
-
-app.get('/', function (req, res) {
-  // try to initialize the db on every request if it's not already
-  // initialized.
-  if (!db) {
-    initDb(function(err){});
-  }
-  if (db) {
-    var col = db.collection('counts');
-    // Create a document with request IP and current time of request
-    col.insert({ip: req.ip, date: Date.now()});
-    col.count(function(err, count){
-      res.render('index.html', { pageCountMessage : count, dbInfo: dbDetails });
+    var connection = request.accept('echo-protocol', request.origin);
+    console.log((new Date()) + ' Connection accepted.');
+    connection.on('message', function(message) {
+        if (message.type === 'utf8') {
+            console.log('Received Message: ' + message.utf8Data);
+            connection.sendUTF(message.utf8Data);
+        }
+        else if (message.type === 'binary') {
+            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
+            connection.sendBytes(message.binaryData);
+        }
     });
-  } else {
-    res.render('index.html', { pageCountMessage : null});
-  }
-});
-
-app.get('/pagecount', function (req, res) {
-  // try to initialize the db on every request if it's not already
-  // initialized.
-  if (!db) {
-    initDb(function(err){});
-  }
-  if (db) {
-    db.collection('counts').count(function(err, count ){
-      res.send('{ pageCount: ' + count + '}');
+    connection.on('close', function(reasonCode, description) {
+        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
     });
-  } else {
-    res.send('{ pageCount: -1 }');
-  }
 });
-
-// error handling
-app.use(function(err, req, res, next){
-  console.error(err.stack);
-  res.status(500).send('Something bad happened!');
-});
-
-initDb(function(err){
-  console.log('Error connecting to Mongo. Message:\n'+err);
-});
-
-app.listen(port, ip);
-console.log('Server running on http://%s:%s', ip, port);
-
-module.exports = app ;
