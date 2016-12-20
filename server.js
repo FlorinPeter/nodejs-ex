@@ -3,7 +3,7 @@ var WebSocketServer = require('websocket').server;
 var http = require('http');
 
 var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
+    //console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
     response.end();
 });
@@ -30,7 +30,7 @@ wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
       request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+      //console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
       return;
     }
 
@@ -47,7 +47,7 @@ wsServer.on('request', function(request) {
         }
     });
     connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        //console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
     });
 
     connection.on('error', function(error) {
