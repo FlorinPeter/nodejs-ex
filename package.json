@@ -11,6 +11,7 @@
     "npm": "*"
   },
   "scripts": {
+    "dev": "node wsclient_test.js",
     "start": "node server.js"
   },
   "repository": {
