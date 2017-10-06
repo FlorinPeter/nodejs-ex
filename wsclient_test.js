@@ -28,7 +28,9 @@ function start_one_client(i) {
 
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
-                console.log("Received: '" + message.utf8Data + "'");
+                if (process.env.SHOW_MESSAGES) {
+                    console.log("Received: '" + message.utf8Data + "'");
+                }
             }
         });
 
