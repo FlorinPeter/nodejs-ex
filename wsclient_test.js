@@ -44,10 +44,10 @@ function start_one_client(i) {
         sendNumber();
     });
 
-    client.connect('ws://websocket-test.apps.lab.example.com/', 'echo-protocol');
+    client.connect(process.env.TEST_URL, 'echo-protocol');
 }
 
-for(var i=0;i<20000;i++){
+for(var i=0;i<process.env.CLIENT_COUNT;i++){
     console.log("start " + i + " websocket client");
     setTimeout(start_one_client, 10*i, i);
 }
