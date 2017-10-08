@@ -34,6 +34,6 @@ $ oc new-app nodejs:4~https://github.com/FlorinPeter/nodejs-websocket-test.git \
 
 ## cleanup 
 ```
-$ oc delete bc,dc,route,is -l app=server
-$ oc delete bc,dc,is -l app=client
+$ oc delete bc,dc,route,is,svc -l app=server
+$ oc delete bc,dc,is,svc -l app=client
 ```
