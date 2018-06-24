@@ -40,7 +40,7 @@ function start_one_client(i) {
                 var b = parseInt(Math.random()*100+1);
                 msg = {sns_id:_id, data:{x:a, y:b}}
                 connection.sendUTF(JSON.stringify(msg));
-                setTimeout(sendNumber, 1000);
+                setTimeout(sendNumber, 10000);
             }
         }
         sendNumber();
